@@ -28,3 +28,18 @@ func (s *UserService) Login(login *model.UserLogin) (*model.User, error) {
 
 	return nil, fmt.Errorf("Invalid credentials")
 }
+
+func (s *UserService) Register(register *model.UserRegisterRequest) (*model.User, error) {
+	var err error
+	register.Password, err = utils.HashUserPassword(register.Password)
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := s.repository.CreateUser(register)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}

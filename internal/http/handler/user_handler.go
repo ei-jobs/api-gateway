@@ -16,10 +16,10 @@ func NewUserHandler(service *service.UserService) *UserHandler {
 	return &UserHandler{service: service}
 }
 
-func (h *UserHandler) GetAllUsers(w http.ResponseWriter, r *http.Request) {}
+func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {}
 
 func (h *UserHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
-	var login *model.UserLogin
+	login := &model.UserLogin{}
 	err := utils.ParseJSON(r, login)
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err)
@@ -34,6 +34,22 @@ func (h *UserHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 	utils.WriteJSON(w, http.StatusOK, user)
 }
 
-func (h *UserHandler) HandleRegister(w http.ResponseWriter, r *http.Request) {}
+func (h *UserHandler) HandleRegister(w http.ResponseWriter, r *http.Request) {
+	register := &model.UserRegisterRequest{}
+	if err := utils.ParseJSON(r, register); err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err)
+	}
 
-func (h *UserHandler) HandleUpdate(w http.ResponseWriter, r *http.Request) {}
+	user, err := h.service.Register(register)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusOK, user)
+	return
+}
+
+func (h *UserHandler) HandleUpdate(w http.ResponseWriter, r *http.Request) {
+
+}
