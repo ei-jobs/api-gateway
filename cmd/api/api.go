@@ -44,6 +44,9 @@ func (s *APIServer) Run() error {
 		})
 		router.Route("/resume", func(router chi.Router) {
 			router.Get("/{userID}", resumeHandler.GetResumesByUserID)
+			router.Post("/", resumeHandler.CreateResume)
+			router.Put("/{resumeID}", resumeHandler.UpdateResume)
+			router.Delete("/{resumeID}", resumeHandler.DeleteResume)
 		})
 	})
 

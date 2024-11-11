@@ -13,30 +13,68 @@ func NewResumeService(repository *repository.ResumeRepository) *ResumeService {
 	return &ResumeService{repository: repository}
 }
 
-// GetResumesByUserID fetches all resumes for a specific user by their user ID.
 func (s *ResumeService) GetResumesByUserID(userID int) ([]*model.Resume, error) {
-	// Fetch resumes from the repository
 	resumes, err := s.repository.GetResumesByUserID(userID)
 	if err != nil {
 		return nil, err
 	}
-
-	// Include additional logic for skills and experience
 	for _, resume := range resumes {
-		// Fetch skills for each resume
 		skills, err := s.repository.GetSkillsByResumeID(resume.ID)
 		if err != nil {
 			return nil, err
 		}
 		resume.Skills = skills
-
-		// Calculate total experience in years and months
 		totalExperience, err := s.repository.CalculateTotalExperience(resume.ID)
 		if err != nil {
 			return nil, err
 		}
 		resume.TotalExperience = totalExperience
 	}
-
 	return resumes, nil
+}
+
+func (s *ResumeService) CreateResume(resume *model.Resume) (*model.Resume, error) {
+	createdResume, err := s.repository.CreateResume(resume)
+	if err != nil {
+		return nil, err
+	}
+
+	skills, err := s.repository.GetSkillsByResumeID(createdResume.ID)
+	if err != nil {
+		return nil, err
+	}
+	createdResume.Skills = skills
+
+	totalExperience, err := s.repository.CalculateTotalExperience(createdResume.ID)
+	if err != nil {
+		return nil, err
+	}
+	createdResume.TotalExperience = totalExperience
+
+	return createdResume, nil
+}
+
+func (s *ResumeService) UpdateResume(resume *model.Resume) (*model.Resume, error) {
+	updatedResume, err := s.repository.UpdateResume(resume)
+	if err != nil {
+		return nil, err
+	}
+
+	skills, err := s.repository.GetSkillsByResumeID(updatedResume.ID)
+	if err != nil {
+		return nil, err
+	}
+	updatedResume.Skills = skills
+
+	totalExperience, err := s.repository.CalculateTotalExperience(updatedResume.ID)
+	if err != nil {
+		return nil, err
+	}
+	updatedResume.TotalExperience = totalExperience
+
+	return updatedResume, nil
+}
+
+func (s *ResumeService) DeleteResume(resumeID int) error {
+	return s.repository.DeleteResume(resumeID)
 }

@@ -42,7 +42,6 @@ func (r *ResumeRepository) GetResumesByUserID(userID int) ([]*model.Resume, erro
 	return resumes, nil
 }
 
-// GetSkillsByResumeID fetches all skills associated with a specific resume.
 func (r *ResumeRepository) GetSkillsByResumeID(resumeID int) ([]*model.ResumeSkill, error) {
 	var skills []*model.ResumeSkill
 
@@ -112,4 +111,102 @@ func (r *ResumeRepository) CalculateTotalExperience(resumeID int) (string, error
 	totalExperience = fmt.Sprintf("%d years %d months", years, months)
 
 	return totalExperience, nil
+}
+
+func (r *ResumeRepository) CreateResume(resume *model.Resume) (*model.Resume, error) {
+	query := `
+        INSERT INTO resumes (
+            user_id, date_of_birth, gender, specialization_id,
+            description, salary_from, salary_to, salary_period, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
+    `
+
+	result, err := r.db.Exec(query,
+		resume.UserID, resume.DateOfBirth, resume.Gender,
+		resume.SpecializationID, resume.Description,
+		resume.SalaryFrom, resume.SalaryTo, resume.SalaryPeriod,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	resumeID, err := result.LastInsertId()
+	if err != nil {
+		return nil, err
+	}
+	resume.ID = int(resumeID)
+
+	if len(resume.Skills) > 0 {
+		for _, skill := range resume.Skills {
+			skillQuery := `
+                INSERT INTO resume_skills (resume_id, skill)
+                VALUES (?, ?)
+            `
+			_, err := r.db.Exec(skillQuery, resumeID, skill.Skill)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	return resume, nil
+}
+
+func (r *ResumeRepository) UpdateResume(resume *model.Resume) (*model.Resume, error) {
+	query := `
+        UPDATE resumes
+        SET user_id = ?, date_of_birth = ?, gender = ?,
+            specialization_id = ?, description = ?,
+            salary_from = ?, salary_to = ?, salary_period = ?
+        WHERE id = ?
+    `
+
+	_, err := r.db.Exec(query,
+		resume.UserID, resume.DateOfBirth, resume.Gender,
+		resume.SpecializationID, resume.Description,
+		resume.SalaryFrom, resume.SalaryTo, resume.SalaryPeriod,
+		resume.ID,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = r.db.Exec("DELETE FROM resume_skills WHERE resume_id = ?", resume.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(resume.Skills) > 0 {
+		for _, skill := range resume.Skills {
+			skillQuery := `
+                INSERT INTO resume_skills (resume_id, skill)
+                VALUES (?, ?)
+            `
+			_, err := r.db.Exec(skillQuery, resume.ID, skill.Skill)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	return resume, nil
+}
+
+func (r *ResumeRepository) DeleteResume(resumeID int) error {
+	_, err := r.db.Exec("DELETE FROM resume_skills WHERE resume_id = ?", resumeID)
+	if err != nil {
+		return err
+	}
+
+	_, err = r.db.Exec("DELETE FROM resume_organizations WHERE resume_id = ?", resumeID)
+	if err != nil {
+		return err
+	}
+
+	_, err = r.db.Exec("DELETE FROM resumes WHERE id = ?", resumeID)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
