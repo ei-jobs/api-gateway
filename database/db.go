@@ -87,6 +87,22 @@ func Migrate(db *sql.DB) error {
             work_schedule VARCHAR(255) NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )`,
+		`CREATE TABLE IF NOT EXISTS vacancy_conditions (
+        	id INT AUTO_INCREMENT PRIMARY KEY,
+         	vacancy_id INT NOT NULL,
+          	icon VARCHAR(255) NOT NULL,
+           	condition_text VARCHAR(1000) NOT NULL
+        )`,
+		`CREATE TABLE IF NOT EXISTS vacancy_requirements (
+           	id INT AUTO_INCREMENT PRIMARY KEY,
+           	vacancy_id INT NOT NULL,
+           	requirement VARCHAR(1000) NOT NULL
+        )`,
+		`CREATE TABLE IF NOT EXISTS vacancy_responsibilities (
+           	id INT AUTO_INCREMENT PRIMARY KEY,
+           	vacancy_id INT NOT NULL,
+           	responsibility VARCHAR(1000) NOT NULL
+        )`,
 		`CREATE TABLE IF NOT EXISTS specialization_categories (
             id INT AUTO_INCREMENT PRIMARY KEY,
             name VARCHAR(255) NOT NULL UNIQUE

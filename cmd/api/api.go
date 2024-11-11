@@ -37,6 +37,10 @@ func (s *APIServer) Run() error {
 	resumeService := service.NewResumeService(resumeRepository)
 	resumeHandler := handler.NewResumeHandler(resumeService)
 
+	vacanyRepository := repository.NewVacancyRepository(s.db)
+	vacancyService := service.NewVacancyService(vacanyRepository)
+	vacancyHandler := handler.NewVacancyHandler(*vacancyService)
+
 	router.Route("/api/v1", func(router chi.Router) {
 		router.Route("/user", func(router chi.Router) {
 			router.Post("/login", userHandler.HandleLogin)
@@ -47,6 +51,10 @@ func (s *APIServer) Run() error {
 			router.Post("/", resumeHandler.CreateResume)
 			router.Put("/{resumeID}", resumeHandler.UpdateResume)
 			router.Delete("/{resumeID}", resumeHandler.DeleteResume)
+		})
+		router.Route("/vacancy", func(router chi.Router) {
+			router.Get("/", vacancyHandler.GetAllVacancies)
+			router.Get("/{id}", vacancyHandler.GetVacancy)
 		})
 	})
 
