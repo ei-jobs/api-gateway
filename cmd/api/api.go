@@ -33,10 +33,17 @@ func (s *APIServer) Run() error {
 	userService := service.NewUserService(userRepository)
 	userHandler := handler.NewUserHandler(userService)
 
+	resumeRepository := repository.NewResumeRepository(s.db)
+	resumeService := service.NewResumeService(resumeRepository)
+	resumeHandler := handler.NewResumeHandler(resumeService)
+
 	router.Route("/api/v1", func(router chi.Router) {
 		router.Route("/user", func(router chi.Router) {
 			router.Post("/login", userHandler.HandleLogin)
 			router.Post("/register", userHandler.HandleRegister)
+		})
+		router.Route("/resume", func(router chi.Router) {
+			router.Get("/{userID}", resumeHandler.GetResumesByUserID)
 		})
 	})
 
