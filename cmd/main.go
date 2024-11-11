@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"log"
 
 	"github.com/aidosgal/ei-jobs-core/cmd/api"
@@ -10,11 +11,13 @@ import (
 )
 
 func main() {
-	db, err := database.NewMySQLStorage(mysql.Config{
-		User:   config.Envs.DBUser,
-		Passwd: config.Envs.DBPassword,
-		Addr:   config.Envs.DBAddress,
+	shouldSeed := flag.Bool("seed", false, "Seed the database with initial data")
+	flag.Parse()
 
+	db, err := database.NewMySQLStorage(mysql.Config{
+		User:                 config.Envs.DBUser,
+		Passwd:               config.Envs.DBPassword,
+		Addr:                 config.Envs.DBAddress,
 		Net:                  "tcp",
 		AllowNativePasswords: true,
 		ParseTime:            true,
@@ -28,8 +31,15 @@ func main() {
 		log.Fatal(err)
 	}
 
-	server := api.NewAPIServer(config.Envs.Port, db)
+	if *shouldSeed {
+		err = database.SeedDatabase(db)
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Println("Database seeded successfully")
+	}
 
+	server := api.NewAPIServer(config.Envs.Port, db)
 	if err := server.Run(); err != nil {
 		log.Fatal(err)
 	}

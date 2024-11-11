@@ -6,6 +6,8 @@ import (
 	"net/http"
 
 	"github.com/aidosgal/ei-jobs-core/internal/http/handler"
+	"github.com/aidosgal/ei-jobs-core/internal/repository"
+	"github.com/aidosgal/ei-jobs-core/internal/service"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
@@ -27,7 +29,9 @@ func (s *APIServer) Run() error {
 	router.Use(middleware.Logger)
 	router.Use(middleware.URLFormat)
 
-	userHandler := handler.NewUserHandler()
+	userRepository := repository.NewUserRepository(s.db)
+	userService := service.NewUserService(userRepository)
+	userHandler := handler.NewUserHandler(userService)
 
 	router.Route("/api/v1", func(router chi.Router) {
 		router.Route("/user", func(router chi.Router) {

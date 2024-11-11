@@ -33,3 +33,7 @@ func (h *UserHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 
 	utils.WriteJSON(w, http.StatusOK, user)
 }
+
+func (h *UserHandler) HandleRegister(w http.ResponseWriter, r *http.Request) {}
+
+func (h *UserHandler) HandleUpdate(w http.ResponseWriter, r *http.Request) {}

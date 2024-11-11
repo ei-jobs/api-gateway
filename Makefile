@@ -6,3 +6,6 @@ test:
 
 run: build
 	@./bin/ei-jobs
+
+seed: build
+	@./bin/ei-jobs -seed
