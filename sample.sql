@@ -1,3 +1,5 @@
+use ei_jobs;
+
 -- Insert first vacancy
 INSERT INTO vacancies (
     user_id,
