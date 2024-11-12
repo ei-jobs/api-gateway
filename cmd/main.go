@@ -15,9 +15,11 @@ func main() {
 	flag.Parse()
 
 	db, err := database.NewMySQLStorage(mysql.Config{
-		User:                 config.Envs.DBUser,
-		Passwd:               config.Envs.DBPassword,
-		Addr:                 config.Envs.DBAddress,
+		User:   config.Envs.DBUser,
+		Passwd: config.Envs.DBPassword,
+		Addr:   config.Envs.DBAddress,
+		DBName: config.Envs.DBName,
+
 		Net:                  "tcp",
 		AllowNativePasswords: true,
 		ParseTime:            true,
