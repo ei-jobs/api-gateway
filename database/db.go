@@ -118,6 +118,10 @@ func Migrate(db *sql.DB) error {
          	user_id INT NOT NULL,
           	receiver_id INT NOT NULL
         )`,
+		`CREATE TABLE IF NOT EXISTS companies (
+        	id INT AUTO_INCREMENT PRIMARY KEY,
+
+        )`,
 	}
 
 	for _, query := range tableQueries {
