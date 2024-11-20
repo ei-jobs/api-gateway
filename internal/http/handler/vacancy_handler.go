@@ -65,3 +65,7 @@ func (h *VacancyHandler) GetVacancy(w http.ResponseWriter, r *http.Request) {
 
 	utils.WriteJSON(w, http.StatusOK, vacancy)
 }
+
+func (h *VacancyHandler) CreateVacancy(w http.ResponseWriter, r *http.Request) {
+     
+}
