@@ -60,7 +60,7 @@ func (h *ResumeHandler) UpdateResume(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var resume model.Resume
-	if err := utils.ParseJSON(r, &resume); err != nil {
+	if err = utils.ParseJSON(r, &resume); err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err)
 		return
 	}

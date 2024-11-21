@@ -39,7 +39,7 @@ func (s *APIServer) Run() error {
 
 	vacanyRepository := repository.NewVacancyRepository(s.db)
 	vacancyService := service.NewVacancyService(vacanyRepository)
-	vacancyHandler := handler.NewVacancyHandler(*vacancyService)
+	vacancyHandler := handler.NewVacancyHandler(vacancyService)
 
 	router.Route("/api/v1", func(router chi.Router) {
 		router.Route("/user", func(router chi.Router) {
@@ -55,6 +55,9 @@ func (s *APIServer) Run() error {
 		router.Route("/vacancy", func(router chi.Router) {
 			router.Get("/", vacancyHandler.GetAllVacancies)
 			router.Get("/{id}", vacancyHandler.GetVacancy)
+			router.Post("/", vacancyHandler.CreateVacancy)
+			router.Put("/{id}", vacancyHandler.UpdateVacancy)
+			router.Delete("/{id}", vacancyHandler.DeleteVacancy)
 		})
 	})
 

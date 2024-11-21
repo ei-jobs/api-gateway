@@ -32,5 +32,5 @@ func (s *VacancyService) UpdateVacancy(ctx context.Context, vacancy *model.OneVa
 }
 
 func (s *VacancyService) DeleteVacancy(ctx context.Context, id int) error {
-	return nil
+	return s.repository.DeleteVacancyById(ctx, id)
 }

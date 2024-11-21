@@ -11,10 +11,10 @@ import (
 )
 
 type VacancyHandler struct {
-	service service.VacancyService
+	service *service.VacancyService
 }
 
-func NewVacancyHandler(service service.VacancyService) *VacancyHandler {
+func NewVacancyHandler(service *service.VacancyService) *VacancyHandler {
 	return &VacancyHandler{service: service}
 }
 
@@ -90,5 +90,19 @@ func (h *VacancyHandler) UpdateVacancy(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *VacancyHandler) DeleteVacancy(w http.ResponseWriter, r *http.Request) {
+    vacancyIdStr := chi.URLParam(r, "id") 
+    vacancyId, err := strconv.Atoi(vacancyIdStr)
+    if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err)
+        return
+    }
+    
+    err = h.service.DeleteVacancy(r.Context(), vacancyId)
+    if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err)
+        return
+    }
 
+	utils.WriteJSON(w, http.StatusOK, "Вакансия успешно удалена")
+    return
 }
