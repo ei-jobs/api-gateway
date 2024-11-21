@@ -126,11 +126,6 @@ func Migrate(db *sql.DB) error {
             price INT NOT NULL,
             deadline VARCHAR(255) NOT NULL
         )`,
-		`CREATE TABLE IF NOT EXISTS user_description (
-        	id INT AUTO_INCREMENT PRIMARY KEY,
-            user_id INT NOT NULL,
-            description VARCHAR(10000) NOT NULL
-        )`,
 	}
 
 	for _, query := range tableQueries {
