@@ -22,3 +22,15 @@ func (s *VacancyService) GetVacancies(ctx context.Context, filters model.Vacancy
 func (s *VacancyService) GetVacancyByID(ctx context.Context, id int) (*model.OneVacancy, error) {
 	return s.repository.GetVacancyByID(ctx, id)
 }
+
+func (s *VacancyService) CreateVacancy(ctx context.Context, vacancy *model.VacancyRequest) (*model.VacancyRequest, error) {
+	return s.repository.StoreVacancy(ctx, vacancy)
+}
+
+func (s *VacancyService) UpdateVacancy(ctx context.Context, vacancy *model.OneVacancy, id int) (*model.OneVacancy, error) {
+	return s.repository.UpdateVacancy(ctx, vacancy, id)
+}
+
+func (s *VacancyService) DeleteVacancy(ctx context.Context, id int) error {
+	return nil
+}

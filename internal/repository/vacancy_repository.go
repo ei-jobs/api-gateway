@@ -73,7 +73,6 @@ func (r *VacancyRepository) GetVacancies(ctx context.Context, filters model.Vaca
 }
 
 func (r *VacancyRepository) GetVacancyByID(ctx context.Context, id int) (*model.OneVacancy, error) {
-	// First get the main vacancy information
 	vacancy := &model.OneVacancy{}
 	err := r.db.QueryRowContext(ctx, `
         SELECT
@@ -93,21 +92,18 @@ func (r *VacancyRepository) GetVacancyByID(ctx context.Context, id int) (*model.
 		return nil, err
 	}
 
-	// Get conditions
 	conditions, err := r.getVacancyConditions(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 	vacancy.Conditions = conditions
 
-	// Get requirements
 	requirements, err := r.getVacancyRequirements(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 	vacancy.Requirements = requirements
 
-	// Get responsibilities
 	responsibilities, err := r.getVacancyResponsibilities(ctx, id)
 	if err != nil {
 		return nil, err
@@ -115,6 +111,64 @@ func (r *VacancyRepository) GetVacancyByID(ctx context.Context, id int) (*model.
 	vacancy.Responsibilities = responsibilities
 
 	return vacancy, nil
+}
+
+func (r *VacancyRepository) StoreVacancy(ctx context.Context, vacancy *model.VacancyRequest) (*model.VacancyRequest, error) {
+	result, err := r.db.Exec(`
+            INSERT INTO vacancies (title, user_id, salary_from, salary_to, salary_period, work_format, work_schedule)
+            VALUES ($1, $2, $3, $4,$5,$6,$7)
+            RETURNING id;
+    `, vacancy.Title, vacancy.UserId, vacancy.SalaryFrom, vacancy.SalaryTo, vacancy.SalaryPeriod, vacancy.WorkFormat, vacancy.WorkSchedule)
+	if err != nil {
+		return nil, err
+	}
+
+	vacancy_id, err := result.LastInsertId()
+	if err != nil {
+		return nil, err
+	}
+
+	if len(vacancy.Conditions) > 0 {
+		for _, condition := range vacancy.Conditions {
+			_, err := r.db.Exec(`
+				INSERT INTO vacancy_conditions (vacancy_id, icon, condition)
+				VALUES ($1, $2, $3);
+			`, vacancy_id, condition.Icon, condition.Condition)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	if len(vacancy.Requirements) > 0 {
+		for _, requirement := range vacancy.Requirements {
+			_, err := r.db.Exec(`
+					INSERT INTO vacancy_requirements (vacancy_id, requirement)
+					VALUES ($1, $2);
+				`, vacancy_id, requirement.Requirement)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	if len(vacancy.Responsibilities) > 0 {
+		for _, responsibility := range vacancy.Responsibilities {
+			_, err := r.db.Exec(`
+						INSERT INTO vacancy_responsibilities (vacancy_id, responsibility)
+						VALUES ($1, $2);
+					`, vacancy_id, responsibility.Responsibility)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	return vacancy, nil
+}
+
+func (r *VacancyRepository) UpdateVacancy(ctx context.Context, vacany *model.OneVacancy, vacancy_id int) (*model.OneVacancy, error) {
+	return vacany, nil
 }
 
 func (r *VacancyRepository) getVacancyConditions(ctx context.Context, vacancyID int) ([]*model.VacanyCondition, error) {

@@ -29,6 +29,21 @@ type OneVacancy struct {
 	CreatedAt        string                  `json:"created_at"`
 }
 
+type VacancyRequest struct {
+	Title            string                  `json:"title"`
+	City             string                  `json:"city"`
+	Country          string                  `json:"country"`
+	UserId           int                     `json:"user_id"`
+	SalaryFrom       *int                    `json:"salary_from"`
+	SalaryTo         *int                    `json:"salary_to"`
+	SalaryPeriod     string                  `json:"salary_period"`
+	WorkFormat       string                  `json:"work_format"`
+	WorkSchedule     string                  `json:"work_schedule"`
+	Conditions       []*VacanyCondition      `json:"coniditions"`
+	Requirements     []*VacanyRequirement    `json:"requirements"`
+	Responsibilities []*VacanyResponsibility `json:"responsiblities"`
+}
+
 type VacanyCondition struct {
 	ID        int    `json:"id"`
 	VacancyId int    `json:"vacancy_id"`

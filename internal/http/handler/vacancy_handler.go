@@ -67,5 +67,28 @@ func (h *VacancyHandler) GetVacancy(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *VacancyHandler) CreateVacancy(w http.ResponseWriter, r *http.Request) {
-     
+	vacancy := &model.VacancyRequest{}
+
+	err := utils.ParseJSON(r, vacancy)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	result, err := h.service.CreateVacancy(r.Context(), vacancy)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusOK, result)
+	return
+}
+
+func (h *VacancyHandler) UpdateVacancy(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func (h *VacancyHandler) DeleteVacancy(w http.ResponseWriter, r *http.Request) {
+
 }
