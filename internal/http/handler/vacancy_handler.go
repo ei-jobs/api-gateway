@@ -86,7 +86,29 @@ func (h *VacancyHandler) CreateVacancy(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *VacancyHandler) UpdateVacancy(w http.ResponseWriter, r *http.Request) {
+    vacancyIdStr := chi.URLParam(r, "id") 
+    vacancyId, err := strconv.Atoi(vacancyIdStr)
+    if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err)
+        return
+    }
 
+    vacancy := &model.VacancyRequest{}
+    
+    err = utils.ParseJSON(r, vacancy)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+
+    response, err := h.service.UpdateVacancy(r.Context(), vacancy, vacancyId)
+    if err != nil {
+        utils.WriteError(w, http.StatusBadRequest, err)
+		return
+    }
+
+    utils.WriteJSON(w, http.StatusOK, response)
+	return
 }
 
 func (h *VacancyHandler) DeleteVacancy(w http.ResponseWriter, r *http.Request) {

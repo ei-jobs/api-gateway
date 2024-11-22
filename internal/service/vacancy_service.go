@@ -27,7 +27,7 @@ func (s *VacancyService) CreateVacancy(ctx context.Context, vacancy *model.Vacan
 	return s.repository.StoreVacancy(ctx, vacancy)
 }
 
-func (s *VacancyService) UpdateVacancy(ctx context.Context, vacancy *model.OneVacancy, id int) (*model.OneVacancy, error) {
+func (s *VacancyService) UpdateVacancy(ctx context.Context, vacancy *model.VacancyRequest, id int) (*model.VacancyRequest, error) {
 	return s.repository.UpdateVacancy(ctx, vacancy, id)
 }
 

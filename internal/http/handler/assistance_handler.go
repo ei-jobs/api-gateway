@@ -15,4 +15,5 @@ func NewAssistanceHandler(service *service.AssistanceService) *AssistanceHandler
 }
 
 func (h *AssistanceHandler) GetAssistancesByUserId (w http.ResponseWriter, r *http.Request) {
+    
 }

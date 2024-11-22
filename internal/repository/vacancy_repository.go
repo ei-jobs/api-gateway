@@ -166,8 +166,86 @@ func (r *VacancyRepository) StoreVacancy(ctx context.Context, vacancy *model.Vac
 	return vacancy, nil
 }
 
-func (r *VacancyRepository) UpdateVacancy(ctx context.Context, vacany *model.OneVacancy, vacancy_id int) (*model.OneVacancy, error) {
-	return vacany, nil
+func (r *VacancyRepository) UpdateVacancy(ctx context.Context, vacancy *model.VacancyRequest, vacancy_id int) (*model.VacancyRequest, error) {
+    _ , err := r.db.Exec(`
+        UPDATE vacancies
+        SET title = ?, 
+            user_id = ?, 
+            salary_from = ?, 
+            salary_to = ?, 
+            salary_period = ?, 
+            work_format = ?, 
+            work_schedule = ?, 
+            specialization_id = ?, 
+            city = ?, 
+            country = ?
+        WHERE id = ? 
+        `, vacancy.Title, vacancy.UserId, vacancy.SalaryFrom, vacancy.SalaryTo, vacancy.SalaryPeriod, vacancy.WorkFormat, vacancy.WorkSchedule, vacancy.SpecializationId, vacancy.City, vacancy.Country, vacancy_id)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(vacancy.Conditions) > 0 {
+		for _, condition := range vacancy.Conditions {
+			_, err := r.db.Exec(`
+				DELETE FROM vacancy_conditions
+				WHERE vacancy_id = ?;
+			`, vacancy_id)
+			if err != nil {
+				return nil, err
+			}
+
+            _, err = r.db.Exec(`
+				INSERT INTO vacancy_conditions (vacancy_id, icon, condition_text)
+				VALUES (?, ?, ?);
+			`, vacancy_id, condition.Icon, condition.Condition)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	if len(vacancy.Requirements) > 0 {
+		for _, requirement := range vacancy.Requirements {
+            _, err := r.db.Exec(`
+				DELETE FROM vacancy_requirements
+				WHERE vacancy_id = ?;
+			`, vacancy_id)
+			if err != nil {
+				return nil, err
+			}
+
+			_, err = r.db.Exec(`
+					INSERT INTO vacancy_requirements (vacancy_id, requirement)
+					VALUES (?, ?);
+				`, vacancy_id, requirement.Requirement)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	if len(vacancy.Responsibilities) > 0 {
+		for _, responsibility := range vacancy.Responsibilities {
+            _, err := r.db.Exec(`
+				DELETE FROM vacancy_responsibilities
+				WHERE vacancy_id = ?;
+			`, vacancy_id)
+			if err != nil {
+				return nil, err
+			}
+
+			_, err = r.db.Exec(`
+						INSERT INTO vacancy_responsibilities (vacancy_id, responsibility)
+						VALUES (?, ?);
+					`, vacancy_id, responsibility.Responsibility)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	return vacancy, nil
 }
 
 func (r *VacancyRepository) DeleteVacancyById(ctx context.Context, id int) error {
