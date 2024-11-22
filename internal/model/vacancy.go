@@ -86,5 +86,7 @@ type VacancyFilters struct {
 	Title            string
 	City             string
 	Country          string
-	Salary           *int
+	SalaryFrom       int
+	WorkSchedule     string
+	WorkFormat       string
 }

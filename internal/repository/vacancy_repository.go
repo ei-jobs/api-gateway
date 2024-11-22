@@ -46,9 +46,19 @@ func (r *VacancyRepository) GetVacancies(ctx context.Context, filters model.Vaca
 		args = append(args, filters.Country)
 	}
 
-	if filters.Salary != nil {
-		query += " AND (v.salary_from <= ? OR v.salary_to >= ?)"
-		args = append(args, *filters.Salary, *filters.Salary)
+	if filters.WorkFormat != "" {
+		query += " AND v.work_format = ?"
+		args = append(args, filters.WorkFormat)
+	}
+
+	if filters.WorkSchedule != "" {
+		query += " AND v.work_schedule = ?"
+		args = append(args, filters.WorkSchedule)
+	}
+
+	if filters.SalaryFrom != 0 {
+		query += " AND (v.salary_from <= ?)"
+		args = append(args, filters.SalaryFrom)
 	}
 
 	rows, err := r.db.QueryContext(ctx, query, args...)
@@ -167,19 +177,19 @@ func (r *VacancyRepository) StoreVacancy(ctx context.Context, vacancy *model.Vac
 }
 
 func (r *VacancyRepository) UpdateVacancy(ctx context.Context, vacancy *model.VacancyRequest, vacancy_id int) (*model.VacancyRequest, error) {
-    _ , err := r.db.Exec(`
+	_, err := r.db.Exec(`
         UPDATE vacancies
-        SET title = ?, 
-            user_id = ?, 
-            salary_from = ?, 
-            salary_to = ?, 
-            salary_period = ?, 
-            work_format = ?, 
-            work_schedule = ?, 
-            specialization_id = ?, 
-            city = ?, 
+        SET title = ?,
+            user_id = ?,
+            salary_from = ?,
+            salary_to = ?,
+            salary_period = ?,
+            work_format = ?,
+            work_schedule = ?,
+            specialization_id = ?,
+            city = ?,
             country = ?
-        WHERE id = ? 
+        WHERE id = ?
         `, vacancy.Title, vacancy.UserId, vacancy.SalaryFrom, vacancy.SalaryTo, vacancy.SalaryPeriod, vacancy.WorkFormat, vacancy.WorkSchedule, vacancy.SpecializationId, vacancy.City, vacancy.Country, vacancy_id)
 	if err != nil {
 		return nil, err
@@ -195,7 +205,7 @@ func (r *VacancyRepository) UpdateVacancy(ctx context.Context, vacancy *model.Va
 				return nil, err
 			}
 
-            _, err = r.db.Exec(`
+			_, err = r.db.Exec(`
 				INSERT INTO vacancy_conditions (vacancy_id, icon, condition_text)
 				VALUES (?, ?, ?);
 			`, vacancy_id, condition.Icon, condition.Condition)
@@ -207,7 +217,7 @@ func (r *VacancyRepository) UpdateVacancy(ctx context.Context, vacancy *model.Va
 
 	if len(vacancy.Requirements) > 0 {
 		for _, requirement := range vacancy.Requirements {
-            _, err := r.db.Exec(`
+			_, err := r.db.Exec(`
 				DELETE FROM vacancy_requirements
 				WHERE vacancy_id = ?;
 			`, vacancy_id)
@@ -227,7 +237,7 @@ func (r *VacancyRepository) UpdateVacancy(ctx context.Context, vacancy *model.Va
 
 	if len(vacancy.Responsibilities) > 0 {
 		for _, responsibility := range vacancy.Responsibilities {
-            _, err := r.db.Exec(`
+			_, err := r.db.Exec(`
 				DELETE FROM vacancy_responsibilities
 				WHERE vacancy_id = ?;
 			`, vacancy_id)
@@ -249,39 +259,39 @@ func (r *VacancyRepository) UpdateVacancy(ctx context.Context, vacancy *model.Va
 }
 
 func (r *VacancyRepository) DeleteVacancyById(ctx context.Context, id int) error {
-    _, err := r.db.Exec(`
-        DELETE FROM vacancy_conditions 
+	_, err := r.db.Exec(`
+        DELETE FROM vacancy_conditions
         WHERE vacancy_id = ?;
     `, id)
-    if err != nil {
-        return err
-    }
-    
-    _, err = r.db.Exec(`
-        DELETE FROM vacancy_requirements 
-        WHERE vacancy_id = ?;
-    `, id)
-    if err != nil {
-        return err
-    }
-    
-    _, err = r.db.Exec(`
-        DELETE FROM vacancy_responsibilities 
-        WHERE vacancy_id = ?;
-    `, id)
-    if err != nil {
-        return err
-    }
+	if err != nil {
+		return err
+	}
 
-    _, err = r.db.Exec(`
-        DELETE FROM vacancies 
+	_, err = r.db.Exec(`
+        DELETE FROM vacancy_requirements
+        WHERE vacancy_id = ?;
+    `, id)
+	if err != nil {
+		return err
+	}
+
+	_, err = r.db.Exec(`
+        DELETE FROM vacancy_responsibilities
+        WHERE vacancy_id = ?;
+    `, id)
+	if err != nil {
+		return err
+	}
+
+	_, err = r.db.Exec(`
+        DELETE FROM vacancies
         WHERE id = ?;
     `, id)
-    if err != nil {
-        return err
-    }
+	if err != nil {
+		return err
+	}
 
-    return nil
+	return nil
 }
 
 func (r *VacancyRepository) getVacancyConditions(ctx context.Context, vacancyID int) ([]*model.VacanyCondition, error) {

@@ -21,22 +21,20 @@ func NewVacancyHandler(service *service.VacancyService) *VacancyHandler {
 func (h *VacancyHandler) GetAllVacancies(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 
+	salary_from, err := strconv.Atoi(query.Get("salary_from"))
 	filters := model.VacancyFilters{
 		SpecializationID: 0,
 		Title:            query.Get("title"),
 		City:             query.Get("city"),
 		Country:          query.Get("country"),
+		SalaryFrom:       salary_from,
+		WorkFormat:       query.Get("work_format"),
+		WorkSchedule:     query.Get("work_schedule"),
 	}
 
 	if specID := query.Get("specialization_id"); specID != "" {
 		if id, err := strconv.Atoi(specID); err == nil {
 			filters.SpecializationID = id
-		}
-	}
-
-	if salaryStr := query.Get("salary"); salaryStr != "" {
-		if salary, err := strconv.Atoi(salaryStr); err == nil {
-			filters.Salary = &salary
 		}
 	}
 
@@ -86,45 +84,45 @@ func (h *VacancyHandler) CreateVacancy(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *VacancyHandler) UpdateVacancy(w http.ResponseWriter, r *http.Request) {
-    vacancyIdStr := chi.URLParam(r, "id") 
-    vacancyId, err := strconv.Atoi(vacancyIdStr)
-    if err != nil {
-		utils.WriteError(w, http.StatusBadRequest, err)
-        return
-    }
-
-    vacancy := &model.VacancyRequest{}
-    
-    err = utils.ParseJSON(r, vacancy)
+	vacancyIdStr := chi.URLParam(r, "id")
+	vacancyId, err := strconv.Atoi(vacancyIdStr)
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 
-    response, err := h.service.UpdateVacancy(r.Context(), vacancy, vacancyId)
-    if err != nil {
-        utils.WriteError(w, http.StatusBadRequest, err)
-		return
-    }
+	vacancy := &model.VacancyRequest{}
 
-    utils.WriteJSON(w, http.StatusOK, response)
+	err = utils.ParseJSON(r, vacancy)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	response, err := h.service.UpdateVacancy(r.Context(), vacancy, vacancyId)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusOK, response)
 	return
 }
 
 func (h *VacancyHandler) DeleteVacancy(w http.ResponseWriter, r *http.Request) {
-    vacancyIdStr := chi.URLParam(r, "id") 
-    vacancyId, err := strconv.Atoi(vacancyIdStr)
-    if err != nil {
+	vacancyIdStr := chi.URLParam(r, "id")
+	vacancyId, err := strconv.Atoi(vacancyIdStr)
+	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err)
-        return
-    }
-    
-    err = h.service.DeleteVacancy(r.Context(), vacancyId)
-    if err != nil {
+		return
+	}
+
+	err = h.service.DeleteVacancy(r.Context(), vacancyId)
+	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err)
-        return
-    }
+		return
+	}
 
 	utils.WriteJSON(w, http.StatusOK, "Вакансия успешно удалена")
-    return
+	return
 }

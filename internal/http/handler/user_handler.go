@@ -53,3 +53,6 @@ func (h *UserHandler) HandleRegister(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) HandleUpdate(w http.ResponseWriter, r *http.Request) {
 
 }
+
+func (h *UserHandler) GetAllCompanies(w http.ResponseWriter, r *http.Request) {
+}

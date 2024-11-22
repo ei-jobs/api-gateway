@@ -43,3 +43,8 @@ func (s *UserService) Register(register *model.UserRegisterRequest) (*model.User
 
 	return user, nil
 }
+
+func (s *UserService) GetAllCompanies() ([]*model.User, error) {
+    var users []*model.User
+    return users, nil
+}

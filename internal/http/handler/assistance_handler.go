@@ -17,3 +17,15 @@ func NewAssistanceHandler(service *service.AssistanceService) *AssistanceHandler
 func (h *AssistanceHandler) GetAssistancesByUserId (w http.ResponseWriter, r *http.Request) {
     
 }
+
+func (h *AssistanceHandler) CreateAssistance(w http.ResponseWriter, r *http.Request) {
+    
+}
+
+func (h *AssistanceHandler) UpdateAssistance(w http.ResponseWriter, r *http.Request) {
+    
+}
+
+func (h *AssistanceHandler) DeleteAssistance(w http.ResponseWriter, r *http.Request) {
+    
+}
