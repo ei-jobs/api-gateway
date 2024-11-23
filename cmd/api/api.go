@@ -41,9 +41,13 @@ func (s *APIServer) Run() error {
 	vacancyService := service.NewVacancyService(vacanyRepository)
 	vacancyHandler := handler.NewVacancyHandler(vacancyService)
 
-    assistanceRepository := repository.NewAssistanceRepository(s.db)
-    assistanceService := service.NewAssistanceService(assistanceRepository)
-    assistanceHandler := handler.NewAssistanceHandler(assistanceService)
+	assistanceRepository := repository.NewAssistanceRepository(s.db)
+	assistanceService := service.NewAssistanceService(assistanceRepository)
+	assistanceHandler := handler.NewAssistanceHandler(assistanceService)
+
+	messageRepository := repository.NewMessageRepository(s.db)
+	messageService := service.NewMessageService(messageRepository)
+	messageHandler := handler.NewMessageHandler(messageService)
 
 	router.Route("/api/v1", func(router chi.Router) {
 		router.Route("/user", func(router chi.Router) {
@@ -63,9 +67,12 @@ func (s *APIServer) Run() error {
 			router.Put("/{id}", vacancyHandler.UpdateVacancy)
 			router.Delete("/{id}", vacancyHandler.DeleteVacancy)
 		})
-        router.Route("/assitance", func(router chi.Router) {
+		router.Route("/assitance", func(router chi.Router) {
 			router.Get("/{userId}", assistanceHandler.GetAssistancesByUserId)
 		})
+	})
+	router.Route("/ws", func(router chi.Router) {
+		router.Get("/", messageHandler.HandleWS)
 	})
 
 	log.Print("Listening on", s.addr)

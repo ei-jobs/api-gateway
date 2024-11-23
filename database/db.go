@@ -118,6 +118,21 @@ func Migrate(db *sql.DB) error {
          	user_id INT NOT NULL,
           	receiver_id INT NOT NULL
         )`,
+		`CREATE TABLE IF NOT EXISTS messages (
+        	id INT AUTO_INCREMENT PRIMARY KEY,
+         	sender_id INT NOT NULL,
+          	receiver_id INT NOT NULL,
+           	content VARCHAR(5000) NULL,
+            resume_id VARCHAR(5000) NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`,
+		`CREATE TABLE IF NOT EXISTS message_attachments (
+			id INT AUTO_INCREMENT PRIMARY KEY,
+			message_id INT NOT NULL,
+			type VARCHAR(1000) NOT NULL,
+			url VARCHAR(1000) NOT NULL
+        )`,
 		`CREATE TABLE IF NOT EXISTS user_services (
         	id INT AUTO_INCREMENT PRIMARY KEY,
             user_id INT NOT NULL,
