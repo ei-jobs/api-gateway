@@ -36,10 +36,10 @@ func (r *UserRepository) GetUserByPhone(phone string) (*model.User, error) {
 	return user, nil
 }
 
-func (r *UserRepository) GetUserById(id int) (*model.User, error) {
-    user := &model.User{}
+func (r *UserRepository) GetUserById(id int) (*model.UserResponse, error) {
+	user := &model.UserResponse{}
 
-    r.db.QueryRow(`
+	err := r.db.QueryRow(`
         SELECT
             id,
             first_name,
@@ -48,73 +48,133 @@ func (r *UserRepository) GetUserById(id int) (*model.User, error) {
             email,
             phone,
             avatar_url,
-            role_id,
-            password
+            role_id
         FROM
             users
         WHERE id = ?
-    `, id).Scan(&user.Id, &user.FirstName, &user.LastName, &user.CompanyName, &user.Email, &user.Phone, &user.AvatarUrl, &user.RoleId, &user.Password)
+    `, id).Scan(&user.Id, &user.FirstName, &user.LastName, &user.CompanyName, &user.Email, &user.Phone, &user.AvatarUrl, &user.RoleId)
 
-    return user, nil
-}
+	if err != nil {
+		return nil, err
+	}
 
-func (r *UserRepository) GetUsersByRoleId(roleID int) ([]*model.User, error) {
-    var users []*model.User
-
-    rows, err := r.db.Query(`
+	servicesRows, err := r.db.Query(`
         SELECT
-            id,
-            first_name,
-            last_name,
-            company_name,
-            email,
-            phone,
-            avatar_url,
-            role_id,
-            password
+            us.id,
+            us.name,
+            us.description,
+            us.price,
+            us.deadline
         FROM
-            users
-        WHERE role_id = ?
-    `, roleID)
-    if err != nil {
-        return nil, err
-    }
-    defer rows.Close()
+            user_services us
+        WHERE us.user_id = ?
+    `, id)
+	if err != nil {
+		return nil, err
+	}
+	defer servicesRows.Close()
 
-    for rows.Next() {
-        user := &model.User{}
-        if err := rows.Scan(
-            &user.Id,
-            &user.FirstName,
-            &user.LastName,
-            &user.CompanyName,
-            &user.Email,
-            &user.Phone,
-            &user.AvatarUrl,
-            &user.RoleId,
-            &user.Password,
-        ); err != nil {
-            return nil, err
-        }
-        users = append(users, user)
-    }
+	for servicesRows.Next() {
+		service := &model.AssistanceResponse{}
+		err := servicesRows.Scan(
+			&service.Id,
+			&service.Name,
+			&service.Description,
+			&service.Price,
+			&service.Deadline,
+		)
+		if err != nil {
+			return nil, err
+		}
 
-    if err = rows.Err(); err != nil {
-        return nil, err
-    }
+		user.Services = append(user.Services, service)
+	}
 
-    return users, nil
+	if err := servicesRows.Err(); err != nil {
+		return nil, err
+	}
+
+	return user, nil
 }
 
+func (r *UserRepository) GetUsersByRoleId(roleID int) ([]*model.Company, error) {
+	var companies []*model.Company
+
+	rows, err := r.db.Query(`
+        SELECT
+            u.id,
+            u.first_name,
+            u.last_name,
+            u.company_name,
+            u.email,
+            u.phone,
+            u.avatar_url,
+            u.role_id
+        FROM
+            users u
+        WHERE u.role_id = ?
+    `, roleID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		company := &model.Company{}
+		err := rows.Scan(
+			&company.Id,
+			&company.FirstName,
+			&company.LastName,
+			&company.CompanyName,
+			&company.Email,
+			&company.Phone,
+			&company.AvatarUrl,
+			&company.RoleId,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		var priceFrom int
+		err = r.db.QueryRow(`
+            SELECT COALESCE(MIN(price), 0)
+            FROM user_services
+            WHERE user_id = ?
+        `, company.Id).Scan(&priceFrom)
+		if err != nil {
+			return nil, err
+		}
+		company.PriceFrom = priceFrom
+
+		var review float64
+		err = r.db.QueryRow(`
+            SELECT COALESCE(AVG(mark), 0)
+            FROM reviews
+            WHERE company_id = ? AND user_id = ?
+        `, company.Id, company.Id).Scan(&review)
+		if err != nil {
+			return nil, err
+		}
+		company.Review = review
+
+		companies = append(companies, company)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return companies, nil
+}
 
 func (r *UserRepository) CreateUser(register *model.UserRegisterRequest) (*model.User, error) {
 	user := &model.User{}
 	query := `
-        INSERT INTO users (first_name, last_name, role_id, email, phone, password)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO users (first_name, last_name, company_name, role_id, email, phone, password)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
     `
 
-	result, err := r.db.Exec(query, register.FirstName, register.LastName, register.RoleId, register.Email, register.Phone, register.Password)
+	result, err := r.db.Exec(query, register.FirstName, register.LastName, register.CompanyName, register.RoleId, register.Email, register.Phone, register.Password)
 	if err != nil {
 		return nil, err
 	}
@@ -124,10 +184,11 @@ func (r *UserRepository) CreateUser(register *model.UserRegisterRequest) (*model
 		return nil, err
 	}
 
-	role_id := 1
+	role_id := register.RoleId
 	user.Id = int(lastID)
 	user.FirstName = &register.FirstName
 	user.LastName = &register.LastName
+	user.CompanyName = &register.CompanyName
 	user.Email = &register.Email
 	user.Phone = &register.Phone
 	user.Password = register.Password

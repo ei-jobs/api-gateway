@@ -44,7 +44,14 @@ func (s *UserService) Register(register *model.UserRegisterRequest) (*model.User
 	return user, nil
 }
 
-func (s *UserService) GetAllCompanies() ([]*model.User, error) {
-    var users []*model.User
-    return users, nil
+func (s *UserService) GetAllCompanies() ([]*model.Company, error) {
+	companies, err := s.repository.GetUsersByRoleId(2)
+	if err != nil {
+		return nil, err
+	}
+	return companies, nil
+}
+
+func (s *UserService) GetUserById(id int) (*model.UserResponse, error) {
+	return s.repository.GetUserById(id)
 }

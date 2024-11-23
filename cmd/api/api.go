@@ -53,6 +53,8 @@ func (s *APIServer) Run() error {
 		router.Route("/user", func(router chi.Router) {
 			router.Post("/login", userHandler.HandleLogin)
 			router.Post("/register", userHandler.HandleRegister)
+			router.Get("/companies", userHandler.GetAllCompanies)
+			router.Get("/{id}", userHandler.GetUser)
 		})
 		router.Route("/resume", func(router chi.Router) {
 			router.Get("/{userID}", resumeHandler.GetResumesByUserID)
@@ -69,6 +71,7 @@ func (s *APIServer) Run() error {
 		})
 		router.Route("/assitance", func(router chi.Router) {
 			router.Get("/{userId}", assistanceHandler.GetAssistancesByUserId)
+			router.Post("/", assistanceHandler.CreateAssistance)
 		})
 		router.Route("/messages", func(router chi.Router) {
 			router.Get("/chats", messageHandler.GetChatsByUserID)
