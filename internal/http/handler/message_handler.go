@@ -6,10 +6,12 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/aidosgal/ei-jobs-core/internal/model"
 	"github.com/aidosgal/ei-jobs-core/internal/service"
+	"github.com/aidosgal/ei-jobs-core/internal/utils"
 	"github.com/gorilla/websocket"
 )
 
@@ -92,4 +94,46 @@ func (h *MessageHandler) BroadcastMessages() {
 			}
 		}
 	}
+}
+
+func (h *MessageHandler) GetChatsByUserID(w http.ResponseWriter, r *http.Request) {
+	userIDStr := r.URL.Query().Get("user_id")
+	userID, err := strconv.Atoi(userIDStr)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	chats, err := h.MessageService.GetChatsByUserID(userID)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusOK, chats)
+}
+
+func (h *MessageHandler) GetMessagesByUserAndReceiver(w http.ResponseWriter, r *http.Request) {
+	userIDStr := r.URL.Query().Get("user_id")
+	receiverIDStr := r.URL.Query().Get("receiver_id")
+
+	userID, err := strconv.Atoi(userIDStr)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	receiverID, err := strconv.Atoi(receiverIDStr)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	messages, err := h.MessageService.GetMessagesByUserAndReceiver(userID, receiverID)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusOK, messages)
 }

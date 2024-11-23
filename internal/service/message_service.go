@@ -30,3 +30,11 @@ func (s *MessageService) SendMessage(message *model.Message) (int64, error) {
 
 	return messageID, nil
 }
+
+func (s *MessageService) GetChatsByUserID(userID int) ([]*model.ChatSummary, error) {
+	return s.Repo.GetChatsByUserID(userID)
+}
+
+func (s *MessageService) GetMessagesByUserAndReceiver(userID, receiverID int) ([]*model.Message, error) {
+	return s.Repo.GetMessagesByUserAndReceiver(userID, receiverID)
+}

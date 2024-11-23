@@ -48,3 +48,77 @@ func (r *MessageRepository) SaveAttachment(messageID int64, attachment *model.Me
 	_, err := r.DB.Exec(query, messageID, attachment.Type, attachment.Url)
 	return err
 }
+
+func (r *MessageRepository) GetChatsByUserID(userID int) ([]*model.ChatSummary, error) {
+	query := `
+		SELECT
+		    CASE
+		        WHEN sender_id = ? THEN receiver_id
+		        ELSE sender_id
+		    END AS other_user_id,
+		    (
+		        SELECT
+		            CASE
+		                WHEN role_id = 1 THEN CONCAT(first_name, ' ', last_name)
+		                WHEN role_id = 2 THEN company_name
+		                ELSE 'Unknown'
+		            END
+		        FROM users
+		        WHERE id = CASE
+                    WHEN sender_id = ? THEN receiver_id
+                    ELSE sender_id
+                END
+		    ) AS receiver_name,
+		    content,
+		    MAX(created_at) AS last_sent_time
+		FROM messages
+		WHERE sender_id = ? OR receiver_id = ?
+		GROUP BY other_user_id, receiver_name, content
+		ORDER BY last_sent_time DESC;
+	`
+
+	rows, err := r.DB.Query(query, userID, userID, userID, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var chats []*model.ChatSummary
+	for rows.Next() {
+		var chat model.ChatSummary
+		err := rows.Scan(&chat.ReceiverID, &chat.ReceiverName, &chat.LastMessage, &chat.LastSentTime)
+		if err != nil {
+			return nil, err
+		}
+		chats = append(chats, &chat)
+	}
+
+	return chats, nil
+}
+
+func (r *MessageRepository) GetMessagesByUserAndReceiver(userID, receiverID int) ([]*model.Message, error) {
+	query := `
+		SELECT id, sender_id, receiver_id, content, resume_id, created_at, updated_at
+		FROM messages
+		WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)
+		ORDER BY created_at ASC
+	`
+
+	rows, err := r.DB.Query(query, userID, receiverID, receiverID, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var messages []*model.Message
+	for rows.Next() {
+		var msg model.Message
+		err := rows.Scan(&msg.Id, &msg.SenderID, &msg.ReceiverID, &msg.Content, &msg.ResumeId, &msg.CreatedAt, &msg.UpdatedAt)
+		if err != nil {
+			return nil, err
+		}
+		messages = append(messages, &msg)
+	}
+
+	return messages, nil
+}

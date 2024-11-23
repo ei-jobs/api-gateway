@@ -70,6 +70,10 @@ func (s *APIServer) Run() error {
 		router.Route("/assitance", func(router chi.Router) {
 			router.Get("/{userId}", assistanceHandler.GetAssistancesByUserId)
 		})
+		router.Route("/messages", func(router chi.Router) {
+			router.Get("/chats", messageHandler.GetChatsByUserID)
+			router.Get("/", messageHandler.GetMessagesByUserAndReceiver)
+		})
 	})
 	router.Route("/ws", func(router chi.Router) {
 		router.Get("/", messageHandler.HandleWS)

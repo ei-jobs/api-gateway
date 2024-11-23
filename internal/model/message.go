@@ -20,3 +20,10 @@ type MessageAttachment struct {
 	Data      string `json:"data"`
 	Name      string `json:"name"`
 }
+
+type ChatSummary struct {
+	ReceiverID   int       `json:"receiver_id"`
+	ReceiverName string    `json:"receiver_name"`
+	LastMessage  *string   `json:"last_message"`
+	LastSentTime time.Time `json:"last_sent_time"`
+}
