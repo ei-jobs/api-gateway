@@ -2,6 +2,8 @@ package repository
 
 import (
 	"database/sql"
+	"fmt"
+	"time"
 
 	"github.com/aidosgal/ei-jobs-core/internal/model"
 )
@@ -91,6 +93,112 @@ func (r *UserRepository) GetUserById(id int) (*model.UserResponse, error) {
 	}
 
 	if err := servicesRows.Err(); err != nil {
+		return nil, err
+	}
+
+	resumesRows, err := r.db.Query(`
+        SELECT
+            id,
+            user_id,
+            date_of_birth,
+            gender,
+            specialization_id,
+            description,
+            salary_from,
+            salary_to,
+            salary_period,
+            created_at
+        FROM
+            resumes
+        WHERE user_id = ?
+    `, id)
+	if err != nil {
+		return nil, err
+	}
+	defer resumesRows.Close()
+
+	for resumesRows.Next() {
+		resume := &model.Resume{}
+		err := resumesRows.Scan(
+			&resume.ID,
+			&resume.UserID,
+			&resume.DateOfBirth,
+			&resume.Gender,
+			&resume.SpecializationID,
+			&resume.Description,
+			&resume.SalaryFrom,
+			&resume.SalaryTo,
+			&resume.SalaryPeriod,
+			&resume.CreatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		orgRows, err := r.db.Query(`
+            SELECT
+                id,
+                oraganization_name,
+                specialization_id,
+                description,
+                start_month,
+                start_year,
+                end_month,
+                end_year
+            FROM
+                resume_organizations
+            WHERE resume_id = ?
+        `, resume.ID)
+		if err != nil {
+			return nil, err
+		}
+		defer orgRows.Close()
+
+		totalExperienceMonths := 0
+		for orgRows.Next() {
+			org := &model.ResumeOrganization{}
+			var startMonth, startYear, endMonth, endYear string
+			err := orgRows.Scan(
+				&org.ID,
+				&org.OrganizationName,
+				&org.SpecializationID,
+				&org.Description,
+				&startMonth,
+				&startYear,
+				&endMonth,
+				&endYear,
+			)
+			if err != nil {
+				return nil, err
+			}
+
+			startDate, err := time.Parse("2006-01", fmt.Sprintf("%s-%s", startYear, startMonth))
+			if err != nil {
+				return nil, err
+			}
+
+			var endDate time.Time
+			if endYear == "" || endMonth == "" {
+				endDate = time.Now()
+			} else {
+				endDate, err = time.Parse("2006-01", fmt.Sprintf("%s-%s", endYear, endMonth))
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			duration := endDate.Sub(startDate)
+			totalExperienceMonths += int(duration.Hours() / (24 * 30))
+		}
+
+		years := totalExperienceMonths / 12
+		months := totalExperienceMonths % 12
+		resume.TotalExperience = fmt.Sprintf("%d years %d months", years, months)
+
+		user.Resumes = append(user.Resumes, resume)
+	}
+
+	if err := resumesRows.Err(); err != nil {
 		return nil, err
 	}
 
