@@ -22,11 +22,13 @@ type MessageHandler struct {
 }
 
 func NewMessageHandler(service *service.MessageService) *MessageHandler {
-	return &MessageHandler{
+	handler := &MessageHandler{
 		MessageService: service,
 		Clients:        make(map[*websocket.Conn]bool),
 		Broadcast:      make(chan *model.Message),
 	}
+	go handler.BroadcastMessages()
+	return handler
 }
 
 var upgrader = websocket.Upgrader{
@@ -42,42 +44,52 @@ func (h *MessageHandler) HandleWS(w http.ResponseWriter, r *http.Request) {
 		log.Println("WebSocket upgrade error:", err)
 		return
 	}
-
 	defer conn.Close()
+
+	log.Printf("New client connected. Total clients: %d", len(h.Clients))
 	h.Clients[conn] = true
 
 	for {
 		var message model.Message
 		err := conn.ReadJSON(&message)
 		if err != nil {
-			log.Println("Read error:", err)
+			log.Printf("Read error: %v. Removing client. Remaining clients: %d", err, len(h.Clients)-1)
 			delete(h.Clients, conn)
 			break
 		}
-		for _, attachment := range message.Attachments {
+
+		log.Printf("Received message from sender ID: %d to receiver ID: %d", message.SenderID, message.ReceiverID)
+
+		for i, attachment := range message.Attachments {
 			fileData, err := base64.StdEncoding.DecodeString(attachment.Data)
 			if err != nil {
-				log.Println("Error decoding base64:", err)
+				log.Printf("Error decoding base64 for attachment %d: %v", i, err)
 				continue
 			}
 
-			filePath := fmt.Sprintf("./public/messages/%s-%d-%s", time.Now().Format("20060102_150405"), message.SenderID, attachment.Name)
+			filePath := fmt.Sprintf("./public/messages/%s-%d-%s",
+				time.Now().Format("20060102_150405"),
+				message.SenderID,
+				attachment.Name)
+
 			if err := ioutil.WriteFile(filePath, fileData, 0644); err != nil {
-				log.Println("Error saving file:", err)
+				log.Printf("Error saving file %s: %v", filePath, err)
 				continue
 			}
 
-			log.Printf("File saved: %s", filePath)
+			log.Printf("File saved successfully: %s", filePath)
 			attachment.Url = filePath
 		}
 
 		messageID, err := h.MessageService.SendMessage(&message)
 		if err != nil {
-			log.Println("Failed to send message:", err)
+			log.Printf("Failed to send message to service: %v", err)
 			continue
 		}
 
 		message.Id = messageID
+		log.Printf("Broadcasting message ID: %d to %d clients", messageID, len(h.Clients))
+
 		h.Broadcast <- &message
 	}
 }
@@ -85,10 +97,12 @@ func (h *MessageHandler) HandleWS(w http.ResponseWriter, r *http.Request) {
 func (h *MessageHandler) BroadcastMessages() {
 	for {
 		message := <-h.Broadcast
+		log.Printf("Broadcasting message %d to %d clients", message.Id, len(h.Clients))
+
 		for conn := range h.Clients {
 			err := conn.WriteJSON(message)
 			if err != nil {
-				log.Println("Write error:", err)
+				log.Printf("Write error for client: %v", err)
 				conn.Close()
 				delete(h.Clients, conn)
 			}
