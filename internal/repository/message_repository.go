@@ -51,29 +51,42 @@ func (r *MessageRepository) SaveAttachment(messageID int64, attachment *model.Me
 
 func (r *MessageRepository) GetChatsByUserID(userID int) ([]*model.ChatSummary, error) {
 	query := `
-		SELECT
-		    CASE
-		        WHEN sender_id = ? THEN receiver_id
-		        ELSE sender_id
-		    END AS other_user_id,
-		    (
-		        SELECT
-		            CASE
-		                WHEN role_id = 1 THEN CONCAT(first_name, ' ', last_name)
-		                WHEN role_id = 2 THEN company_name
-		                ELSE 'Unknown'
-		            END
-		        FROM users
-		        WHERE id = CASE
-                    WHEN sender_id = ? THEN receiver_id
-                    ELSE sender_id
-                END
-		    ) AS receiver_name,
-		    content,
-		    MAX(created_at) AS last_sent_time
-		FROM messages
-		WHERE sender_id = ? OR receiver_id = ?
-		GROUP BY other_user_id, receiver_name, content
+		WITH latest_messages AS (
+		    SELECT
+		        CASE
+		            WHEN sender_id = ? THEN receiver_id
+		            ELSE sender_id
+		        END AS other_user_id,
+		        MAX(created_at) AS last_sent_time
+		    FROM messages
+		    WHERE sender_id = ? OR receiver_id = ?
+		    GROUP BY other_user_id
+		),
+		final_result AS (
+		    SELECT
+		        lm.other_user_id,
+		        (
+		            SELECT
+		                CASE
+		                    WHEN role_id = 1 THEN CONCAT(first_name, ' ', last_name)
+		                    WHEN role_id = 2 THEN company_name
+		                    ELSE 'Unknown'
+		                END
+		            FROM users
+		            WHERE id = lm.other_user_id
+		        ) AS receiver_name,
+		        m.content,
+		        lm.last_sent_time
+		    FROM latest_messages lm
+		    JOIN messages m
+		        ON lm.other_user_id = CASE
+		            WHEN m.sender_id = ? THEN m.receiver_id
+		            ELSE m.sender_id
+		        END
+		       AND lm.last_sent_time = m.created_at
+		)
+		SELECT *
+		FROM final_result
 		ORDER BY last_sent_time DESC;
 	`
 
