@@ -18,6 +18,7 @@ type OneVacancy struct {
 	City             string                  `json:"city"`
 	Country          string                  `json:"country"`
 	CompanyName      string                  `json:"company_name"`
+	UserId           int                     `json:"user_id"`
 	SalaryFrom       *int                    `json:"salary_from"`
 	SalaryTo         *int                    `json:"salary_to"`
 	SalaryPeriod     string                  `json:"salary_period"`

@@ -86,7 +86,7 @@ func (r *VacancyRepository) GetVacancyByID(ctx context.Context, id int) (*model.
 	vacancy := &model.OneVacancy{}
 	err := r.db.QueryRowContext(ctx, `
         SELECT
-            v.id, v.title, v.city, v.country, u.company_name,
+            v.id, v.title, v.city, v.country, u.company_name, u.id,
             v.salary_from, v.salary_to, v.salary_period,
             v.work_format, v.work_schedule, v.created_at
         FROM vacancies v
@@ -94,7 +94,7 @@ func (r *VacancyRepository) GetVacancyByID(ctx context.Context, id int) (*model.
         WHERE v.id = ?
     `, id).Scan(
 		&vacancy.ID, &vacancy.Title, &vacancy.City, &vacancy.Country,
-		&vacancy.CompanyName, &vacancy.SalaryFrom, &vacancy.SalaryTo,
+		&vacancy.CompanyName, &vacancy.UserId, &vacancy.SalaryFrom, &vacancy.SalaryTo,
 		&vacancy.SalaryPeriod, &vacancy.WorkFormat, &vacancy.WorkSchedule,
 		&vacancy.CreatedAt,
 	)
