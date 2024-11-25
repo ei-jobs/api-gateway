@@ -150,6 +150,7 @@ func Migrate(db *sql.DB) error {
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )`,
+        `ALTER TABLE users ADD COLUMN description VARCHAR(10000) NULL`,
 	}
 
 	for _, query := range tableQueries {
