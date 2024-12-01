@@ -113,7 +113,7 @@ func (r *ResumeRepository) CalculateTotalExperience(resumeID int) (string, error
 	return totalExperience, nil
 }
 
-func (r *ResumeRepository) CreateResume(resume *model.Resume) (*model.Resume, error) {
+func (r *ResumeRepository) CreateResume(resume *model.OneResume) (*model.OneResume, error) {
 	query := `
         INSERT INTO resumes (
             user_id, date_of_birth, gender, specialization_id,
@@ -143,6 +143,37 @@ func (r *ResumeRepository) CreateResume(resume *model.Resume) (*model.Resume, er
                 VALUES (?, ?)
             `
 			_, err := r.db.Exec(skillQuery, resumeID, skill.Skill)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	if len(resume.Organizations) > 0 {
+		for _, organization := range resume.Organizations {
+			skillQuery := `
+                INSERT INTO resume_organizations (
+                	resume_id,
+                 	oraganization_name,
+                  	specialization_id,
+                   	description,
+                    start_month,
+                    start_year,
+                    end_month,
+                    end_year
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            `
+			_, err := r.db.Exec(skillQuery,
+				resumeID,
+				organization.OrganizationName,
+				organization.SpecializationID,
+				organization.Description,
+				organization.StartMonth,
+				organization.StartYear,
+				organization.EndMonth,
+				organization.EndYear,
+			)
 			if err != nil {
 				return nil, err
 			}

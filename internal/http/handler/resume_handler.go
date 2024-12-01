@@ -36,7 +36,7 @@ func (h *ResumeHandler) GetResumesByUserID(w http.ResponseWriter, r *http.Reques
 }
 
 func (h *ResumeHandler) CreateResume(w http.ResponseWriter, r *http.Request) {
-	var resume model.Resume
+	var resume model.OneResume
 	if err := utils.ParseJSON(r, &resume); err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err)
 		return

@@ -33,7 +33,7 @@ func (s *ResumeService) GetResumesByUserID(userID int) ([]*model.Resume, error) 
 	return resumes, nil
 }
 
-func (s *ResumeService) CreateResume(resume *model.Resume) (*model.Resume, error) {
+func (s *ResumeService) CreateResume(resume *model.OneResume) (*model.OneResume, error) {
 	createdResume, err := s.repository.CreateResume(resume)
 	if err != nil {
 		return nil, err
